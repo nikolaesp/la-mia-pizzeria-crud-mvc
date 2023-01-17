@@ -37,13 +37,23 @@ namespace LaMiaPizzeria.Controllers
         [HttpGet]
         public IActionResult Create()
         {
-            return View("Create");
+            using (PizzaContext db = new PizzaContext())
+            {
+                List<Category> categoriesFromDb = db.Categories.ToList<Category>();
+
+                PizzaCategory modelForView = new PizzaCategory();
+                modelForView.Pizza = new Pizza();
+
+                modelForView.Categories = categoriesFromDb;
+
+                return View("Create", modelForView);
+            }
         }
 
 
         [HttpPost]
         [ValidateAntiForgeryToken]
-        public IActionResult Create(Pizza formData)
+        public IActionResult Create(PizzaCategory formData)
         {
             if (!ModelState.IsValid)
             {
@@ -52,11 +62,11 @@ namespace LaMiaPizzeria.Controllers
 
             using (PizzaContext db = new PizzaContext())
             {
-                db.Pizza.Add(formData);
+                db.Pizza.Add(formData.Pizza);
                 db.SaveChanges();
             }
 
-            return RedirectToAction("Index");
+            return RedirectToAction("Index",formData.Pizza);
         }
 
         [HttpGet]
