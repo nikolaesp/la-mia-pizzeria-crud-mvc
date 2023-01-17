@@ -31,9 +31,12 @@
                 }
                 else
                 {
-                    <strong>Categoria di pizza:</strong>
-                    <p>Nessuna</p>
-                    break;
+                    if (Model.Pizza.CategoryId == null)
+                    {
+                        <strong>Categoria di pizza:</strong>
+                        <p>Nessuna</p>
+                        break;
+                    }
                     
                 }
             }
