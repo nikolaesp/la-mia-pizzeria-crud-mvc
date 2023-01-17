@@ -22,13 +22,15 @@ namespace LaMiaPizzeria.Controllers
         {
             using (PizzaContext db = new PizzaContext())
             {
-                Pizza pizzaTrovato = db.Pizza
+                PizzaCategory pizzatrovata = new PizzaCategory();
+                    pizzatrovata.Pizza = db.Pizza
                     .Where(SingoloPizzaNelDb => SingoloPizzaNelDb.Id == id)
                     .FirstOrDefault();
-
-                if (pizzaTrovato != null)
+                pizzatrovata.Categories = db.Categories.ToList();
+               
+                if (pizzatrovata.Pizza != null)
                 {
-                    return View(pizzaTrovato);
+                    return View(pizzatrovata);
                 }
                 return NotFound("Non ci sono pizze presenti");
             }
