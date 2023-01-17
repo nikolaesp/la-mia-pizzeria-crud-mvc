@@ -17,6 +17,8 @@ namespace LaMiaPizzeria.Models
         [Url]
         [Required]
         public string Image { get; set; }
+        public int? CategoryId { get; set; }
+        public Category? Category { get; set; }
 
         public Pizza() { }  
         public Pizza( string title, string description, string image)
