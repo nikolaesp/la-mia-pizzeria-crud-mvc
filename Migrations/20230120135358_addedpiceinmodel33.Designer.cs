@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace LaMiaPizzeria.Migrations
 {
     [DbContext(typeof(PizzaContext))]
-    [Migration("20230119153533_n-n-addedingridentsinmodel")]
-    partial class nnaddedingridentsinmodel
+    [Migration("20230120135358_addedpiceinmodel33")]
+    partial class addedpiceinmodel33
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -47,6 +47,9 @@ namespace LaMiaPizzeria.Migrations
                         .HasColumnType("int");
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
 
                     b.Property<string>("Title")
                         .IsRequired()
@@ -95,6 +98,9 @@ namespace LaMiaPizzeria.Migrations
                     b.Property<string>("Image")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
+
+                    b.Property<double?>("Price")
+                        .HasColumnType("float");
 
                     b.Property<string>("Title")
                         .IsRequired()

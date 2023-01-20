@@ -45,6 +45,9 @@ namespace LaMiaPizzeria.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
+                    b.Property<double>("Price")
+                        .HasColumnType("float");
+
                     b.Property<string>("Title")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -71,7 +74,7 @@ namespace LaMiaPizzeria.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("Ingridient");
+                    b.ToTable("Ingridients");
                 });
 
             modelBuilder.Entity("LaMiaPizzeria.Models.Pizza", b =>

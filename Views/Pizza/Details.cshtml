@@ -17,6 +17,7 @@
                 <strong>Contenuto:</strong>
                 @Model.Pizza.Description
             </p>
+           
         </div>
         <div>
             
@@ -25,8 +26,13 @@
                 if(category.Id == Model.Pizza.CategoryId)
                 {
                     <p>
-                        <strong>Categoria di pizza:</strong>
+                        <strong>Categoria di pizza base:</strong>
                         @category.Title
+                        
+                    </p>
+                    <p>
+                        <strong>Base prezzo:</strong>
+                        @category.Price &euro;
                     </p>
                 }
                 else
@@ -42,5 +48,40 @@
             }
             
         </div>
+
+
+        <div>
+           
+            @foreach (Ingridient ingridients in Model.Pizza.Ingridients)
+            {
+                if (ingridients != null)
+                {
+                            <p>
+                                <strong>@ingridients.Name</strong>
+                                @ingridients.Price &euro;
+
+                            </p>
+                           
+                }
+                else
+                {
+                    if (Model.Pizza.Ingridients == null)
+                    {
+                                    <strong>Categoria di pizza:</strong>
+                                    <p>Nessuna</p>
+                        break;
+                    }
+
+                }
+            }
+
+        </div>
+
+         <h3>
+                <strong>Prezzo Totale con Ingridienti:</strong>
+            @Model.Pizza.Price &euro;
+            </h3>
+
+
     </div>
 </div>

@@ -1,5 +1,9 @@
-﻿using LaMiaPizzeria.Models;
+﻿using Azure;
+using LaMiaPizzeria.Models;
+using LaMiaPizzeria.Utils;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.Rendering;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Hosting;
 using Microsoft.SqlServer.Server;
 
@@ -24,7 +28,8 @@ namespace LaMiaPizzeria.Controllers
             {
                 PizzaCategory pizzatrovata = new PizzaCategory();
                     pizzatrovata.Pizza = db.Pizza
-                    .Where(SingoloPizzaNelDb => SingoloPizzaNelDb.Id == id)
+                    .Where(SingoloPizzaNelDb => SingoloPizzaNelDb.Id == id).Include(pizza => pizza.Category)
+                    .Include(pizza => pizza.Ingridients)
                     .FirstOrDefault();
                 pizzatrovata.Categories = db.Categories.ToList();
                
@@ -47,7 +52,7 @@ namespace LaMiaPizzeria.Controllers
                 modelForView.Pizza = new Pizza();
 
                 modelForView.Categories = categoriesFromDb;
-
+                modelForView.Ingridients = IngridientsConverter.getListTagsForMultipleSelect();
                 return View("Create", modelForView);
             }
         }
@@ -59,16 +64,44 @@ namespace LaMiaPizzeria.Controllers
         {
             if (!ModelState.IsValid)
             {
+                using (PizzaContext db = new PizzaContext())
+                {
+                    List<Category> categories = db.Categories.ToList<Category>();
+                    formData.Categories = categories;
+
+
+                    formData.Ingridients = IngridientsConverter.getListTagsForMultipleSelect();
+                }
+
                 return View("Create", formData);
             }
 
             using (PizzaContext db = new PizzaContext())
             {
+                if (formData.IngridientsSelected != null)
+                {
+                    formData.Pizza.Ingridients = new List<Ingridient>();
+                    double fprice = 0;
+                    foreach (string ingridientid in formData.IngridientsSelected)
+                    {
+                        int ingIdIntFromSelect = int.Parse(ingridientid);
+
+                        Ingridient ing = db.Ingridients.Where(ingDB => ingDB.Id == ingIdIntFromSelect).FirstOrDefault();
+
+                        // todo controllare eventuali altri errori tipo l'id del tag non esiste
+                        fprice += ing.Price;
+                        formData.Pizza.Ingridients.Add(ing);
+                    }
+                    Category catprice = db.Categories.Where(catDB => catDB.Id == formData.Pizza.CategoryId).FirstOrDefault();
+
+                    formData.Pizza.Price = fprice + catprice.Price;
+                }
+               
                 db.Pizza.Add(formData.Pizza);
                 db.SaveChanges();
             }
 
-            return RedirectToAction("Index",formData.Pizza);
+            return RedirectToAction("Index");
         }
 
         [HttpGet]
@@ -77,7 +110,7 @@ namespace LaMiaPizzeria.Controllers
             using (PizzaContext db = new PizzaContext())
             {
                
-                Pizza pizzaupdate = db.Pizza.Where(pizzas => pizzas.Id == id).FirstOrDefault();
+                Pizza pizzaupdate = db.Pizza.Where(pizzas => pizzas.Id == id).Include(pizza => pizza.Ingridients).FirstOrDefault();
                    
                 if (pizzaupdate == null)
                 {
@@ -88,6 +121,22 @@ namespace LaMiaPizzeria.Controllers
                 PizzaCategory modelForView = new PizzaCategory();
                 modelForView.Pizza = pizzaupdate;
                 modelForView.Categories = categories;
+                List<Ingridient> listIngFromDb = db.Ingridients.ToList<Ingridient>();
+
+                List<SelectListItem> listaOpzioniPerLaSelect = new List<SelectListItem>();
+
+                foreach (Ingridient ing in listIngFromDb)
+                {
+                    // Ricerco se il tag che sto inserindo nella lista delle opzioni della select era già stato selezionato dall'utente
+                    // all'interno della lista dei tag del post da modificare
+                    bool eraStatoSelezionato = pizzaupdate.Ingridients.Any(ingSelect => ingSelect.Id == ing.Id);
+
+                    SelectListItem opzioneSingolaSelect = new SelectListItem() { Text = ing.Name, Value = ing.Id.ToString(), Selected = eraStatoSelezionato };
+                    listaOpzioniPerLaSelect.Add(opzioneSingolaSelect);
+                }
+
+                modelForView.Ingridients = listaOpzioniPerLaSelect;
+
 
                 return View("Update", modelForView);
             }
@@ -111,19 +160,43 @@ namespace LaMiaPizzeria.Controllers
 
             using (PizzaContext db = new PizzaContext())
             {
-                Pizza pizzaupdate = db.Pizza.Where(articolo => articolo.Id == id).FirstOrDefault();
+                Pizza pizzaupdate = db.Pizza.Where(articolo => articolo.Id == id).Include(pizza => pizza.Ingridients).FirstOrDefault();
 
                 if (pizzaupdate != null)
                 {
+                  
                     pizzaupdate.Title = formData.Pizza.Title;
                     pizzaupdate.Description = formData.Pizza.Description;
                     pizzaupdate.Image = formData.Pizza.Image;
                     pizzaupdate.Category = formData.Pizza.Category;
                     pizzaupdate.CategoryId = formData.Pizza.CategoryId;
+                    
+                    pizzaupdate.Ingridients.Clear();
 
+                    Category catprice = db.Categories.Where(catDB => catDB.Id == formData.Pizza.CategoryId).FirstOrDefault();
+                    double fprice = catprice.Price;
+
+                    if (formData.IngridientsSelected != null)
+                    {
+
+                        foreach (string ingID in formData.IngridientsSelected)
+                        {
+                            int ingIDSelect = int.Parse(ingID);
+
+                            Ingridient ing = db.Ingridients.Where(ingDb => ingDb.Id == ingIDSelect).FirstOrDefault();
+
+                            // todo controllare eventuali altri errori tipo l'id del tag non esiste
+                            fprice += ing.Price;
+
+                            pizzaupdate.Ingridients.Add(ing);
+                        }
+                    }
+
+                    pizzaupdate.Price = fprice;
                     db.SaveChanges();
 
                     return RedirectToAction("Index");
+
                 }
                 else
                 {
